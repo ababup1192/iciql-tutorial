@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -61,9 +62,9 @@ public class BookTest {
 
     @Test
     public void testSelectWithFilter() throws Exception {
-        // Bookテーブルからイニシャルが「a」であるリストを選択
         Book book = new Book();
 
+        // Bookテーブルからイニシャルが「a」であるリストを選択
         List<Book> selectedBooks = db.from(book).where(book.title).like("a%").select();
 
         // イニシャルが「a」である本のリストと選択した本のリストが一致するかどうか。
@@ -72,7 +73,6 @@ public class BookTest {
 
     @Test
     public void testInsert() throws Exception {
-        // Bookテーブルからイニシャルが「a」であるリストを選択
         Book book = new Book();
 
         // 新しく本をDBに格納
@@ -88,9 +88,126 @@ public class BookTest {
 
         // 挿入したである本のリストと選択した本のリストが一致するかどうか。
         assertThat(selectedBooks, is(insertedBooks));
-        // Bookテーブルの最後の本は挿入した本と一緒するか。
+        // Bookテーブルの最後の本は挿入した本と一致するか。
         assertThat(selectedBooks.get(selectedBooks.size() - 1), is(newBook));
     }
 
+    @Test
+    public void testUpdate() throws Exception {
+        Book book = new Book();
+
+        // イニシャルが「a」のもののタイトルを「abc」へ変更。
+        db.from(book).set(book.title).to("abc")
+                .where(book.title).like("a%").update();
+
+        // タイトルが「abc」の本のリストを取得。
+        List<Book> selectedBooks = db.from(book).where(book.title).is("abc").orderBy(book.id).select();
+
+        // イニシャルが「a」のタイトルの本のリストのタイトルを「abc」」へ変えたリストを作る。
+        List<Book> abcBooks = initialABooks.stream().map(aBook ->
+        {
+            aBook.title = "abc";
+            return aBook;
+        }).collect(Collectors.toList());
+
+        // Bookテーブルの「abc」本のリストとabcBooksが一致するかどうか。
+        assertThat(selectedBooks, is(abcBooks));
+    }
+
+    @Test
+    public void testUpdateByEntity() throws Exception {
+        Book book = new Book();
+
+        // イニシャルが「a」のタイトルの本のリストのタイトルを「abc」」へ変えたリストを作る。
+        List<Book> abcBooks = initialABooks.stream().map(aBook ->
+        {
+            aBook.title = "abc";
+            return aBook;
+        }).collect(Collectors.toList());
+
+        // abcBooksのエレメントを利用してアップデートをする。
+        abcBooks.forEach(abcBook -> db.update(abcBook));
+
+        // タイトルが「abc」の本のリストを取得。
+        List<Book> selectedBooks = db.from(book).where(book.title).is("abc").orderBy(book.id).select();
+
+        // Bookテーブルの「abc」本のリストとabcBooksが一致するかどうか。
+        assertThat(selectedBooks, is(abcBooks));
+    }
+
+    @Test
+    public void testUpdateByEntityList() throws Exception {
+        Book book = new Book();
+
+        // イニシャルが「a」のタイトルの本のリストのタイトルを「abc」」へ変えたリストを作る。
+        List<Book> abcBooks = initialABooks.stream().map(aBook ->
+        {
+            aBook.title = "abc";
+            return aBook;
+        }).collect(Collectors.toList());
+
+        // abcBooksを利用してアップデートをする。
+        db.updateAll(abcBooks);
+
+        // タイトルが「abc」の本のリストを取得。
+        List<Book> selectedBooks = db.from(book).where(book.title).is("abc").orderBy(book.id).select();
+
+        // Bookテーブルの「abc」本のリストとabcBooksが一致するかどうか。
+        assertThat(selectedBooks, is(abcBooks));
+    }
+
+    @Test
+    public void testDelete() throws Exception {
+        Book book = new Book();
+
+        // イニシャルが「a」の本を削除
+        db.from(book).where(book.title).like("a%").delete();
+
+        // Bookテーブルから選択
+        List<Book> selectedBooks = db.from(book).select();
+
+        // 挿入した本のリストからイニシャル
+        insertedBooks.removeAll(initialABooks);
+
+        // Bookテーブルの「abc」本のリストとabcBooksが一致するかどうか。
+        assertThat(selectedBooks, is(insertedBooks));
+    }
+
+
+    @Test
+    public void testDeleteByEntity() throws Exception {
+        Book book = new Book();
+
+        // イニシャルが「a」の本をinitialBooksのエレメントを利用して削除
+        initialABooks.forEach(initialABook -> {
+            db.delete(initialABook);
+        });
+
+        // Bookテーブルから選択
+        List<Book> selectedBooks = db.from(book).select();
+
+        // 挿入した本のリストからイニシャル
+        insertedBooks.removeAll(initialABooks);
+
+        // Bookテーブルの「abc」本のリストとabcBooksが一致するかどうか。
+        assertThat(selectedBooks, is(insertedBooks));
+    }
+
+    @Test
+    public void testDeleteByEntityList() throws Exception {
+        Book book = new Book();
+
+        // イニシャルが「a」の本をinitialBooksのエレメントを利用して削除
+        db.deleteAll(initialABooks);
+
+        // Bookテーブルから選択
+        List<Book> selectedBooks = db.from(book).select();
+
+        // 挿入した本のリストからイニシャル
+        insertedBooks.removeAll(initialABooks);
+
+        // Bookテーブルの「abc」本のリストとabcBooksが一致するかどうか。
+        assertThat(selectedBooks, is(insertedBooks));
+    }
 
 }

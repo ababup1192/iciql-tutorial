@@ -25,12 +25,6 @@ public class Book implements Serializable {
         this.title = title;
     }
 
-
-    public Book(Long id, String title) {
-        this.id = id;
-        this.title = title;
-    }
-
     @Override
     public String toString() {
         return "Book(" + id + ", " + title + ")";
