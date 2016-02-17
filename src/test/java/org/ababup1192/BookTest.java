@@ -2,6 +2,7 @@ package org.ababup1192;
 
 import com.iciql.Db;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.hamcrest.core.IsNull;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -69,6 +70,17 @@ public class BookTest {
 
         // イニシャルが「a」である本のリストと選択した本のリストが一致するかどうか。
         assertThat(selectedBooks, is(initialABooks));
+    }
+
+    @Test
+    public void testSelectWithDao() throws Exception{
+        BookDao bookDao = db.open(BookDao.class);
+
+        Book selectedBook = bookDao.getBook(1);
+        Book nullBook = bookDao.getBook(-1);
+
+        assertThat(selectedBook, is(insertedBooks.get(0)));
+        assertThat(nullBook, new IsNull<>());
     }
 
     @Test
